@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Button, TextInput } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  LogBox,
+  TouchableOpacity,
+  ActivityIndicator,
+  ScrollView,
+  Alert,
+} from "react-native";
 import {
   addTodo,
   deleteTodo,
@@ -16,27 +26,42 @@ export default function TodoScreen() {
   const [input, setInput] = useState("");
   // State to hold all the todos.
   const [todos, setTodos] = useState([]);
+  // State to handle loading
+  const [loading, setLoading] = useState(true);
 
   // Constant to hold user id
   const uid = getUserID();
 
   useEffect(() => {
-    console.log("abg");
+    getTodoData();
+  }, []);
+
+  // Get todo data from firestore
+  function getTodoData() {
+    /**
+     * @Changes
+     * Changed from .get() method to .onSnapshot() method
+     * on line 51 to listen for realtime updates and avoid
+     * infinite loop
+     */
+
     firestore()
       .collection("USERS")
       .doc(uid)
       .collection("TODO")
       .orderBy("createdAt", "desc")
       .onSnapshot((todoRef) => {
+        // Temporary list to store data
         let TODO = [];
         todoRef.docs.map((doc) => {
           TODO.push(doc.data());
         });
         // Add all the todos to our todo state.
-
         setTodos(TODO);
+        // Disable Loading
+        setLoading(false);
       });
-  }, []);
+  }
 
   // Function to handle input submit
   const handleSubmit = () => {
@@ -56,17 +81,19 @@ export default function TodoScreen() {
   const renderStatus = (hasStarted, hasFinished, todoId) => {
     // If the user has finished the task
     if (hasFinished) {
-      return <Text>Finished</Text>;
+      return <Text style={styles.finished}>Finished</Text>;
     }
     // if the user has started the task but not finshed yet
     else if (hasStarted && !hasFinished) {
       return (
         <View>
-          <Text>In Progress</Text>
-          <Button
+          <Text style={styles.inProgress}>In Progress</Text>
+          <TouchableOpacity
+            style={styles.finishedButton}
             onPress={() => handleUpdateFinished(todoId, uid)}
-            title="Finished"
-          />
+          >
+            <Text style={styles.buttonText}>Finished</Text>
+          </TouchableOpacity>
         </View>
       );
     }
@@ -75,10 +102,12 @@ export default function TodoScreen() {
       return (
         <View>
           <Text>Not yet Started</Text>
-          <Button
+          <TouchableOpacity
+            style={styles.startButton}
             onPress={() => handleUpdateStart(todoId, uid)}
-            title="Start"
-          />
+          >
+            <Text style={styles.buttonText}>Start</Text>
+          </TouchableOpacity>
         </View>
       );
     }
@@ -98,16 +127,102 @@ export default function TodoScreen() {
   };
 
   return (
-    <View>
-      <Text>Todo Screen</Text>
-      <Button title="Sign Out" onPress={handleSignOut} />
+    <View style={styles.todoContainer}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Todos</Text>
+
+        <TouchableOpacity onPress={handleSignOut}>
+          <Text style={{ color: "#000" }}>Sign Out</Text>
+        </TouchableOpacity>
+      </View>
       <TextInput
-        placeholder="Add Todo ..."
+        style={styles.todoInput}
+        placeholder="Add todo..."
         value={input}
         onChangeText={(text) => setInput(text)}
       />
-      <Button title="Add Todo" onPress={handleSubmit} />
-      {mapTodos()}
+      <TouchableOpacity style={styles.addTodoButton} onPress={handleSubmit}>
+        <Text style={styles.buttonText}>Add Todo</Text>
+      </TouchableOpacity>
+      {loading ? (
+        <ActivityIndicator style={styles.loadin} size="large" color="black" />
+      ) : (
+        <ScrollView
+          contentContainerStyle={{ paddingVertical: 20 }}
+          showsVerticalScrollIndicator={false}
+        >
+          {mapTodos()}
+        </ScrollView>
+      )}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  todoContainer: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: "bold",
+  },
+  todoInput: {
+    marginVertical: 10,
+    borderWidth: 0.7,
+    borderRadius: 10,
+    padding: 15,
+  },
+  addTodoButton: {
+    backgroundColor: "rgba(1,121,121,1)",
+    padding: 15,
+    alignItems: "center",
+    elevation: 10,
+    marginBottom: 10,
+    borderRadius: 10,
+  },
+  buttonText: {
+    color: "rgba(255,255,255,8)",
+  },
+  finishedButton: {
+    backgroundColor: "rgba(1,201,121,1)",
+    padding: 10,
+    alignItems: "center",
+    elevation: 10,
+    marginBottom: 10,
+    borderRadius: 5,
+  },
+  startButton: {
+    backgroundColor: "rgba(1,201,121,1)",
+    padding: 10,
+    alignItems: "center",
+    elevation: 10,
+    marginBottom: 10,
+    borderRadius: 5,
+  },
+  inProgress: {
+    fontSize: 16,
+    color: "rgba(0,0,0,0.5)",
+    marginBottom: 5,
+  },
+
+  notStarted: {
+    fontSize: 16,
+    color: "rgba(0,0,0,0.5)",
+    marginBottom: 5,
+  },
+  finished: {
+    fontSize: 16,
+    color: "rgba(0,0,0,0.5)",
+    marginBottom: 5,
+  },
+  loading: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+});

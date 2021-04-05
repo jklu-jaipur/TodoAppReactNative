@@ -21,14 +21,19 @@ export default function App() {
     return unsubscribe;
   });
 
-  return <View>{user ? <TodoScreen /> : <LoginScreen />}</View>;
+  return (
+    <View style={styles.container}>
+      <StatusBar style="auto" />
+      {user ? <TodoScreen /> : <LoginScreen />}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
+    marginHorizontal: 20,
+    marginTop: 90,
   },
 });
