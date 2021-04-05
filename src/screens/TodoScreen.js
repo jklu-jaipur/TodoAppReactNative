@@ -21,25 +21,22 @@ export default function TodoScreen() {
   const uid = getUserID();
 
   useEffect(() => {
-    getTodoData();
-  });
-
-  // Get todo data from firestore
-  async function getTodoData() {
-    const todoRef = await firestore()
+    console.log("abg");
+    firestore()
       .collection("USERS")
       .doc(uid)
       .collection("TODO")
       .orderBy("createdAt", "desc")
-      .get();
-    // Temporary list to store data
-    let TODO = [];
-    todoRef.docs.map((doc) => {
-      TODO.push(doc.data());
-    });
-    // Add all the todos to our todo state.
-    setTodos(TODO);
-  }
+      .onSnapshot((todoRef) => {
+        let TODO = [];
+        todoRef.docs.map((doc) => {
+          TODO.push(doc.data());
+        });
+        // Add all the todos to our todo state.
+
+        setTodos(TODO);
+      });
+  }, []);
 
   // Function to handle input submit
   const handleSubmit = () => {
@@ -106,6 +103,7 @@ export default function TodoScreen() {
       <Button title="Sign Out" onPress={handleSignOut} />
       <TextInput
         placeholder="Add Todo ..."
+        value={input}
         onChangeText={(text) => setInput(text)}
       />
       <Button title="Add Todo" onPress={handleSubmit} />

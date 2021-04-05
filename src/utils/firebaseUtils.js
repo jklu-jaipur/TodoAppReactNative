@@ -76,7 +76,6 @@ export async function addTodo(todo, uid) {
   const todoId = todoDoc.id;
   // Server timestamp
   const SERVER_TIMESTAMP = firestore.FieldValue.serverTimestamp();
-  console.log(SERVER_TIMESTAMP);
   // Add todo
   await todoDoc
     .set({
