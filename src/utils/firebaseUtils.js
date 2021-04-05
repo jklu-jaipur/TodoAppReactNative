@@ -1,4 +1,4 @@
-import { Alert } from "react-native";
+import { Alert, ToastAndroid } from "react-native";
 import { auth, firestore } from "./firebase";
 
 /*
@@ -19,9 +19,12 @@ export async function handleSignUp(email, pass) {
     .createUserWithEmailAndPassword(email, pass)
     .then(
       (result) => {
+        // Get the user uid from the result
         const userId = result.user.uid;
         // Add new user at sign in.
-        addNewUser(userId);
+        addNewUser(userId).then(() => {
+          ToastAndroid.show("Welcome Aboard!", ToastAndroid.SHORT);
+        });
       },
       (error) => {
         console.log(error);
@@ -32,16 +35,14 @@ export async function handleSignUp(email, pass) {
 // Function to handle sign in with email and password
 export async function handleSignIn(email, pass) {
   await auth()
-    .signInWithEmailAndPassword("rbindal1233@gmail.com", "rohitbindal")
+    .signInWithEmailAndPassword(email, pass)
     .then(
-      (result) => {
-        console.log("Signed In");
-        const userId = result.user.uid;
-        // Add new user at sign in.
-        addNewUser(userId);
+      () => {
+        // Toast
+        ToastAndroid.show("Signed In", ToastAndroid.SHORT);
       },
       (error) => {
-        console.log(error);
+        Alert.alert("Invalid Credentials", error.message);
       }
     );
 }
@@ -64,8 +65,9 @@ export async function addNewUser(id) {
 }
 
 // Function to handle Sign out
-export function handleSignOut() {
-  return auth().signOut();
+export async function handleSignOut() {
+  await auth().signOut();
+  ToastAndroid.show("Signed Out", ToastAndroid.SHORT);
 }
 
 // function to add todo
@@ -84,7 +86,7 @@ export async function addTodo(todo, uid) {
       createdAt: SERVER_TIMESTAMP,
     })
     .then(
-      () => Alert.alert("Success", "Todo Added"),
+      () => ToastAndroid.show("Todo Added", ToastAndroid.SHORT),
       (error) => Alert.alert(error.message)
     );
 }
@@ -98,19 +100,40 @@ export function getUserID() {
 
 // Delete a todo
 export async function deleteTodo(todoId, uid) {
-  await userDataRef.doc(uid).collection("TODO").doc(todoId).delete();
+  await userDataRef
+    .doc(uid)
+    .collection("TODO")
+    .doc(todoId)
+    .delete()
+    .then(() => {
+      ToastAndroid.show("Todo Deleted", ToastAndroid.SHORT);
+    });
 }
 
 // Update the started value in our todos.
 export async function handleUpdateStart(todoId, uid) {
-  await userDataRef.doc(uid).collection("TODO").doc(todoId).update({
-    started: true,
-  });
+  await userDataRef
+    .doc(uid)
+    .collection("TODO")
+    .doc(todoId)
+    .update({
+      started: true,
+    })
+    .then(() => {
+      ToastAndroid.show("Status Updated", ToastAndroid.SHORT);
+    });
 }
 
 // Update the finished value in our todos.
 export async function handleUpdateFinished(todoId, uid) {
-  await userDataRef.doc(uid).collection("TODO").doc(todoId).update({
-    finished: true,
-  });
+  await userDataRef
+    .doc(uid)
+    .collection("TODO")
+    .doc(todoId)
+    .update({
+      finished: true,
+    })
+    .then(() => {
+      ToastAndroid.show("Status Updated", ToastAndroid.SHORT);
+    });
 }
